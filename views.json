@@ -2,12 +2,57 @@
   {
     "name": "week",
     "title": "This week",
-    "subtitle": "Athlete Management for Claude Code: what needs attention, rendered by npm run view",
+    "subtitle": "Who can train, who needs a look, and what the rules say. Rendered by npm run view.",
     "sections": [
       {
-        "title": "Needs attention",
-        "note": "TODO(author): point this at the industry's attention view (overdue, stuck, quiet).",
-        "sql": "select 'replace me' as item, 'TODO(author)' as why"
+        "title": "Not fully available",
+        "note": "Out or on modified training today, with the expected return.",
+        "sql": "select name as athlete, squad, status, diagnosis, expected_return from availability where status <> 'available' order by squad, status, name"
+      },
+      {
+        "title": "Wellness this morning",
+        "note": "Forms not in, scores well below the athlete's own 28-day normal, or short sleep.",
+        "sql": "select w.name as athlete, w.squad, case when not w.submitted then 'not submitted' else w.score::text end as score, w.baseline as normal, w.sleep_hours, w.comment from wellness_today w cross join settings s where not w.submitted or w.vs_baseline <= -s.wellness_drop or w.sleep_hours < s.sleep_min order by w.squad, w.name"
+      },
+      {
+        "title": "Load spikes",
+        "note": "Seven-day load against the 28-day weekly average, over the ratio set in settings. Athletes who are out are left off.",
+        "sql": "select l.name as athlete, l.squad, round(l.acute) as last_7_days, round(l.chronic) as weekly_average, l.acwr as ratio from load_status l cross join settings s where l.acwr > s.acwr_high and l.status <> 'out' order by l.acwr desc"
+      },
+      {
+        "title": "Concussions in recovery",
+        "note": "The earliest dates for contact training and for competition, and whether a doctor has cleared them.",
+        "sql": "select athlete, squad, reported_on, symptoms_resolved_on as symptom_free_from, contact_ok_from as contact_from, competition_ok_from as play_from, doctor_cleared from concussion_status where status <> 'cleared' or reported_on > current_date - 28 order by reported_on desc"
+      }
+    ]
+  },
+  {
+    "name": "loads",
+    "title": "Training load",
+    "subtitle": "Session RPE (minutes x RPE) for every active athlete: last 7 days, the 28-day weekly average and the ratio.",
+    "sections": [
+      {
+        "title": "Every athlete",
+        "sql": "select name as athlete, squad, status as today, sessions_7d as sessions, round(acute) as last_7_days, round(chronic) as weekly_average, round(last_week) as week_before, acwr as ratio from load_status order by squad, acwr desc nulls last"
+      }
+    ]
+  },
+  {
+    "name": "injuries",
+    "title": "Injury register",
+    "subtitle": "Every injury this season with days lost, the stage reached and who cleared it.",
+    "sections": [
+      {
+        "title": "Open",
+        "sql": "select number, athlete, squad, reported_on, diagnosis, status, days_out, stage_reached, expected_return from injury_register where status <> 'cleared' order by reported_on desc"
+      },
+      {
+        "title": "Cleared",
+        "sql": "select number, athlete, squad, reported_on, diagnosis, days_out, cleared_on, cleared_by_name as cleared_by, cleared_by_role as role from injury_register where status = 'cleared' order by cleared_on desc"
+      },
+      {
+        "title": "Days lost by body area and mechanism",
+        "sql": "select coalesce(body_area, 'not recorded') as body_area, coalesce(mechanism, 'not recorded') as mechanism, count(*) as injuries, sum(days_out) as days_lost from injury_register group by 1, 2 order by days_lost desc"
       }
     ]
   }

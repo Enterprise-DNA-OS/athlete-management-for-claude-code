@@ -1,11 +1,70 @@
 [
   {
-    "name": "example",
-    "title": "TODO(author): the first document this industry must produce",
-    "for_each": "select gen_random_uuid() as id, 'Example' as name",
+    "name": "availability-report",
+    "title": "Squad availability report",
+    "for_each": "select id, name from squads order by code",
     "file": "name",
     "sections": [
-      { "title": "Details", "sql": "select 'replace me' as item, $1::text as record_id" }
+      {
+        "title": "Out",
+        "sql": "select v.name as athlete, v.position, v.diagnosis, v.reported_on as since, v.expected_return from availability v join athletes a on a.id = v.athlete_id where a.squad_id = $1 and v.status = 'out' order by v.expected_return nulls last"
+      },
+      {
+        "title": "Modified training",
+        "note": "Available for the parts of training their physio has signed off. No contact.",
+        "sql": "select v.name as athlete, v.position, v.diagnosis, v.expected_return from availability v join athletes a on a.id = v.athlete_id where a.squad_id = $1 and v.status = 'modified' order by v.name"
+      },
+      {
+        "title": "Available",
+        "sql": "select v.name as athlete, v.position from availability v join athletes a on a.id = v.athlete_id where a.squad_id = $1 and v.status = 'available' order by v.position, v.name"
+      },
+      {
+        "title": "Concussion return dates",
+        "note": "Not before these dates, and only with a doctor's clearance.",
+        "sql": "select c.athlete, c.contact_ok_from as contact_training_from, c.competition_ok_from as competition_from, c.doctor_cleared from concussion_status c join athletes a on a.id = c.athlete_id where a.squad_id = $1 and c.status <> 'cleared'"
+      }
+    ]
+  },
+  {
+    "name": "return-to-play",
+    "title": "Return-to-play record",
+    "for_each": "select i.id, a.first_name || ' ' || a.last_name || ' ' || i.number as label from injuries i join athletes a on a.id = i.athlete_id where i.status <> 'cleared' or i.reported_on > current_date - 60 order by i.number",
+    "file": "label",
+    "sections": [
+      {
+        "title": "The injury",
+        "sql": "select number, athlete, squad, reported_on, body_area, side, mechanism, activity, diagnosis, status from injury_register where id = $1"
+      },
+      {
+        "title": "Graded return",
+        "sql": "select r.stage, r.name, r.completed_on, s.name as signed_by, s.role from rtp_stages r left join staff s on s.id = r.signed_by where r.injury_id = $1 order by r.stage"
+      },
+      {
+        "title": "Concussion dates",
+        "note": "Blank when the injury is not a concussion.",
+        "sql": "select symptoms_resolved_on as symptom_free_from, free_days_needed as symptom_free_days_needed, contact_ok_from as contact_training_from, competition_ok_from as competition_from from concussion_status where id = $1"
+      },
+      {
+        "title": "Clearance",
+        "sql": "select cleared_on, cleared_by_name as cleared_by, cleared_by_role as role, expected_return from injury_register where id = $1"
+      }
+    ]
+  },
+  {
+    "name": "testing-report",
+    "title": "Athlete testing report",
+    "for_each": "select a.id, a.first_name || ' ' || a.last_name as name from athletes a where a.status = 'active' and exists (select 1 from test_results r where r.athlete_id = a.id) order by a.code",
+    "file": "name",
+    "sections": [
+      {
+        "title": "Latest results",
+        "note": "Change against the previous test, judged against the squad's smallest worthwhile change.",
+        "sql": "select test_name as test, tested_on, value || ' ' || unit as result, previous, change, squad_avg as squad_average, swc as smallest_worthwhile_change, verdict from test_changes where athlete_id = $1 order by test"
+      },
+      {
+        "title": "Training load, last four weeks",
+        "sql": "select date_trunc('week', day)::date as week_of, sum(sessions) as sessions, round(sum(load)) as load from daily_load where athlete_id = $1 and day > current_date - 28 group by 1 order by 1"
+      }
     ]
   }
 ]

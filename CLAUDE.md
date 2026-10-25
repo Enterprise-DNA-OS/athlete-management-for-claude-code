@@ -22,7 +22,29 @@ Fill this in once. A worker with context knows. A worker without it guesses.
 
 | When the operator asks for... | Use this |
 |---|---|
-| <!-- TODO(author): one row per slash command --> | `/...` |
+| Who can train, who to talk to before training | `/morning-screen` |
+| What needs doing, what is wrong, what is late | `/attention` |
+| The Monday review | `/weekly-review` |
+| Who is available, modified, out | `/availability` |
+| This morning's wellness forms | `/wellness` |
+| A session, RPE, minutes | `/log-session` |
+| Training load, spikes, the ratio | `/loads` |
+| A new injury or illness | `/log-injury` |
+| A concussion: stages, symptom free, dates, clearance | `/concussion` |
+| The return-to-play board, other injuries' stages | `/rtp` |
+| The injury register, days lost | `/injuries` |
+| Test results, who improved, who went backwards | `/testing` |
+| One athlete's whole record | `/athlete` |
+| A note on an athlete | `/log` |
+| Are we following the rules | `/compliance` |
+| The availability note for the coach | `/draft-availability-report` |
+| A return-to-play plan for an athlete or parents | `/draft-rtp-plan` |
+| A message to a flagged athlete | `/draft-check-in` |
+| Reports to print or attach | `/documents` |
+| A page to look at | `/view`, `/new-view` |
+| Data from Smartabase | `/import` |
+| A backup or a file for someone else | `/export` |
+| Change a field, threshold or rule | `/customise` |
 
 If an ask fits nothing here, run the CLI directly (`npm run <cli> -- --help`) and then propose a new command for it.
 
@@ -32,12 +54,15 @@ If an ask fits nothing here, run the CLI directly (`npm run <cli> -- --help`) an
 - Never delete records without an explicit yes in this session. Prefer marking closed or archived.
 - Never invent a record. If a name is ambiguous, list the candidates and ask.
 - The database is the source of truth. If the answer is not in it, say so.
+- Health information is private. Never paste an athlete's medical detail into anything outside this folder unless the operator names who it is for. Exports go to `exports/`, which git ignores.
+- The doctor decides return to play. Never move a concussed athlete forward, clear them, or use `--force` on a gate unless the operator says the doctor told them to, and log why.
+- A wellness or load flag is a reason to talk to an athlete, never a diagnosis.
 
 ## Where things live
 
 - `scripts/` the CLI. `scripts/lib/db.mjs` picks `DATABASE_URL` (Postgres, Supabase) or the embedded database in `.data/`.
 - `supabase/migrations/` the schema, plain SQL. `npm run migrate` applies it.
 - `.claude/commands/` the slash commands. Add one every time the same ask comes twice.
-- `docs/` the thesis and the guide for moving off Smartabase.
+- `docs/` the thesis, the rules with their sources (`compliance.md`) and the guide for moving off Smartabase.
 
 Built by Enterprise DNA. Installed and run for you as part of Omni: https://enterprisedna.co/omni/instead-of/smartabase

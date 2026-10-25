@@ -1,11 +1,10 @@
 ---
-description: Check the records against the rules this industry lives under (the ones listed in docs/compliance.md) and report what is missing, late, or about to breach, with the rule cited.
+description: Check the records against the rules in docs/compliance.md (health consent, concussion return dates and clearance, stage pacing, repeat concussions, safety checks for staff with under-18s, complete injury records) and report every breach with the rule cited.
 ---
 
-1. Read `docs/compliance.md`. Each rule has a name, the source it comes from, what a breach looks like in the data, and the SQL or command that finds it.
-2. Run each check. Use the CLI's `--json` output or a direct query through `scripts/lib/db.mjs`.
-3. Report as a table: rule, count, the worst example (name and days), the source. Order by severity: breached first, then due within 7 days, then clean.
-4. For anything breached, draft the fix the operator can approve: the record to update, the notice to send (draft to `drafts/`, never send), or the task to add.
-5. If a rule in `docs/compliance.md` is out of date, say so and stop. Do not guess at law. The operator confirms the rule, then you update the doc and the check together.
+1. Run `npm run athletes -- compliance --json`.
+2. Report as a table: rule, count, each breach (athlete or staff member, what is wrong), the source. Breached first, clean last.
+3. For each breach, the fix the operator can approve: record the consent, book the doctor, hold the athlete out of contact, renew the safety check, fill in the mechanism. Draft any message to `drafts/`, never send.
+4. If a rule in `docs/compliance.md` is out of date (a sport's own concussion policy can be stricter), say so and stop. Do not guess. The operator confirms the rule, then you change the setting (`npm run athletes -- settings --community_min_days=...`) and the doc together.
 
-Nothing here is legal advice. The doc records the rules the operator has told the system to enforce, with sources, and this command checks the data against them.
+Nothing here is medical or legal advice. The doc records the rules the programme has told the system to enforce, with sources, and this command checks the records against them.
